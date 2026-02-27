@@ -1,119 +1,131 @@
--- Vx Text (FULL WORKING VERSION + Pixel Font)
+-- Vx Text (Stable + Customize Restored)
 
 local Players = game:GetService("Players")
+local TextService = game:GetService("TextService")
+
 local player = Players.LocalPlayer
+
+-- ================= SETTINGS =================
+
+local settings = {
+	TextSize = 30,
+	TextColor = Color3.fromRGB(255,255,255),
+	BackgroundColor = Color3.fromRGB(40,40,40)
+}
+
+local pixelEnabled = false
+local multiEnabled = false
+local foldingEnabled = false
+local generatedTexts = {}
+local activeDropdown = nil
+local MAX_WIDTH = 500
 
 -- ================= GUI =================
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "VxText"
-gui.Parent = player.PlayerGui
+gui.ResetOnSpawn = false
+gui.DisplayOrder = 999999
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = player:WaitForChild("PlayerGui")
 
--- Overlay (prevents dropdown overlap)
-local overlay = Instance.new("Frame")
-overlay.Parent = gui
-overlay.Size = UDim2.fromScale(1,1)
-overlay.BackgroundTransparency = 1
-overlay.ZIndex = 500
+-- ================= OPEN BUTTON =================
 
--- ================= TOGGLE BUTTON =================
+local openBtn = Instance.new("TextButton", gui)
+openBtn.Size = UDim2.fromScale(0.15,0.06)
+openBtn.Position = UDim2.fromScale(0.03,0.05)
+openBtn.Text = "Open Menu"
+openBtn.Font = Enum.Font.GothamBold
+openBtn.TextScaled = true
+openBtn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+openBtn.TextColor3 = Color3.fromRGB(220,220,220)
+Instance.new("UICorner", openBtn)
 
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Parent = gui
-toggleBtn.Size = UDim2.fromScale(0.12,0.06)
-toggleBtn.Position = UDim2.fromScale(0.03,0.05)
-toggleBtn.Text = "Open Menu"
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextScaled = true
-toggleBtn.BackgroundColor3 = Color3.fromRGB(95,0,255)
-toggleBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0.4,0)
-
--- ================= MAIN FRAME =================
-
-local main = Instance.new("Frame")
-main.Parent = gui
-main.Size = UDim2.fromScale(0.42,0.72)
-main.Position = UDim2.fromScale(0.29,0.14)
-main.BackgroundColor3 = Color3.fromRGB(18,18,25)
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.fromScale(0.45,0.7)
+main.Position = UDim2.fromScale(0.27,0.15)
+main.BackgroundColor3 = Color3.fromRGB(15,15,15)
 main.Visible = false
 main.Active = true
 main.Draggable = true
-Instance.new("UICorner", main).CornerRadius = UDim.new(0.03,0)
+Instance.new("UICorner", main)
 
-toggleBtn.MouseButton1Click:Connect(function()
+openBtn.MouseButton1Click:Connect(function()
 	main.Visible = not main.Visible
-	toggleBtn.Text = main.Visible and "Close Menu" or "Open Menu"
 end)
 
--- ================= SETTINGS =================
+-- ================= TABS =================
 
-local currentSettings = {
-	TextColor = Color3.new(1,1,1),
-	BackgroundColor = Color3.fromRGB(40,40,60),
-	TextSize = 18,
-	BackgroundHeight = 100
-}
+local tabText = Instance.new("TextButton", main)
+tabText.Size = UDim2.fromScale(0.5,0.08)
+tabText.Position = UDim2.fromScale(0,0)
+tabText.Text = "Text"
+tabText.Font = Enum.Font.GothamBold
+tabText.TextScaled = true
+tabText.BackgroundColor3 = Color3.fromRGB(30,30,30)
+tabText.TextColor3 = Color3.fromRGB(220,220,220)
+Instance.new("UICorner", tabText)
 
-local multiTextEnabled = false
-local generatedTexts = {}
+local tabCustom = Instance.new("TextButton", main)
+tabCustom.Size = UDim2.fromScale(0.5,0.08)
+tabCustom.Position = UDim2.fromScale(0.5,0)
+tabCustom.Text = "Customize"
+tabCustom.Font = Enum.Font.GothamBold
+tabCustom.TextScaled = true
+tabCustom.BackgroundColor3 = Color3.fromRGB(30,30,30)
+tabCustom.TextColor3 = Color3.fromRGB(220,220,220)
+Instance.new("UICorner", tabCustom)
 
--- ================= LAYOUT =================
+local textPage = Instance.new("Frame", main)
+textPage.Size = UDim2.fromScale(1,0.92)
+textPage.Position = UDim2.fromScale(0,0.08)
+textPage.BackgroundTransparency = 1
 
-local padding = Instance.new("UIPadding", main)
-padding.PaddingLeft = UDim.new(0.04,0)
-padding.PaddingRight = UDim.new(0.04,0)
-padding.PaddingTop = UDim.new(0.04,0)
+local customPage = Instance.new("Frame", main)
+customPage.Size = UDim2.fromScale(1,0.92)
+customPage.Position = UDim2.fromScale(0,0.08)
+customPage.BackgroundTransparency = 1
+customPage.Visible = false
 
-local layout = Instance.new("UIListLayout", main)
-layout.Padding = UDim.new(0.04,0)
+tabText.MouseButton1Click:Connect(function()
+	textPage.Visible = true
+	customPage.Visible = false
+end)
 
--- ================= TITLE =================
+tabCustom.MouseButton1Click:Connect(function()
+	textPage.Visible = false
+	customPage.Visible = true
+end)
 
-local title = Instance.new("TextLabel")
-title.Parent = main
-title.Size = UDim2.fromScale(1,0.08)
-title.Text = "Vx Text"
-title.Font = Enum.Font.GothamBold
-title.TextScaled = true
-title.BackgroundTransparency = 1
-title.TextColor3 = Color3.fromRGB(170,100,255)
+-- ================= TEXT TAB =================
 
--- ================= TEXT INPUT =================
+local textBox = Instance.new("TextBox", textPage)
+textBox.Size = UDim2.fromScale(0.9,0.12)
+textBox.Position = UDim2.fromScale(0.05,0.08)
+textBox.PlaceholderText = "Enter text..."
+textBox.Font = Enum.Font.GothamBold
+textBox.TextSize = 20
+textBox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+textBox.TextColor3 = Color3.fromRGB(220,220,220)
+Instance.new("UICorner", textBox)
 
-local textBox = Instance.new("TextBox")
-textBox.Parent = main
-textBox.Size = UDim2.fromScale(1,0.1)
-textBox.PlaceholderText = "Enter your text..."
-textBox.Font = Enum.Font.Gotham
-textBox.TextScaled = true
-textBox.BackgroundColor3 = Color3.fromRGB(30,30,40)
-textBox.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", textBox).CornerRadius = UDim.new(0.2,0)
+-- Multiple Toggle
 
--- ================= MULTIPLE TEXT TOGGLE =================
+local multiBtn = Instance.new("TextButton", textPage)
+multiBtn.Size = UDim2.fromScale(0.9,0.12)
+multiBtn.Position = UDim2.fromScale(0.05,0.25)
+multiBtn.Text = "Multiple: OFF"
+multiBtn.Font = Enum.Font.GothamBold
+multiBtn.TextScaled = true
+multiBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+multiBtn.TextColor3 = Color3.fromRGB(220,220,220)
+Instance.new("UICorner", multiBtn)
 
-local multiToggle = Instance.new("TextButton")
-multiToggle.Parent = main
-multiToggle.Size = UDim2.fromScale(1,0.08)
-multiToggle.Text = "Multiple Text: OFF"
-multiToggle.Font = Enum.Font.GothamBold
-multiToggle.TextScaled = true
-multiToggle.BackgroundColor3 = Color3.fromRGB(150,50,50)
-multiToggle.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", multiToggle).CornerRadius = UDim.new(0.3,0)
+multiBtn.MouseButton1Click:Connect(function()
+	multiEnabled = not multiEnabled
+	multiBtn.Text = multiEnabled and "Multiple: ON" or "Multiple: OFF"
 
-multiToggle.MouseButton1Click:Connect(function()
-	multiTextEnabled = not multiTextEnabled
-	
-	if multiTextEnabled then
-		multiToggle.Text = "Multiple Text: ON"
-		multiToggle.BackgroundColor3 = Color3.fromRGB(0,170,100)
-	else
-		multiToggle.Text = "Multiple Text: OFF"
-		multiToggle.BackgroundColor3 = Color3.fromRGB(150,50,50)
-		
+	if not multiEnabled then
 		for i = #generatedTexts, 2, -1 do
 			generatedTexts[i]:Destroy()
 			table.remove(generatedTexts, i)
@@ -121,166 +133,182 @@ multiToggle.MouseButton1Click:Connect(function()
 	end
 end)
 
--- ================= PIXEL FONT TOGGLE =================
+-- Generate Function (unchanged logic)
 
-local pixelEnabled = false
-local defaultFonts = {}
-local pixelFont = Enum.Font.Arcade
+local function generateText()
 
-local pixelBtn = Instance.new("TextButton")
-pixelBtn.Parent = main
-pixelBtn.Size = UDim2.fromScale(1,0.08)
+	if textBox.Text == "" then return end
+
+	local finalText = foldingEnabled and textBox.Text or textBox.Text:gsub("\n"," ")
+	local fontToUse = pixelEnabled and Enum.Font.Arcade or Enum.Font.GothamBold
+
+	if not multiEnabled and #generatedTexts >= 1 then
+		generatedTexts[1]:Destroy()
+		generatedTexts = {}
+	end
+
+	local textSize = TextService:GetTextSize(
+		finalText,
+		settings.TextSize,
+		fontToUse,
+		foldingEnabled and Vector2.new(MAX_WIDTH,1000) or Vector2.new(1000,1000)
+	)
+
+	local padding = 40
+	local width = foldingEnabled and MAX_WIDTH or (textSize.X + padding)
+	local height = textSize.Y + padding
+
+	local holder = Instance.new("Frame", gui)
+	holder.Size = UDim2.fromOffset(width,height)
+	holder.Position = UDim2.new(0.5,-width/2,0.5,-height/2)
+	holder.BackgroundColor3 = settings.BackgroundColor
+	holder.Active = true
+	holder.Draggable = true
+	holder.ZIndex = 1000
+	Instance.new("UICorner", holder)
+
+	local label = Instance.new("TextLabel", holder)
+	label.Size = UDim2.new(1,-20,1,-20)
+	label.Position = UDim2.new(0,10,0,10)
+	label.BackgroundTransparency = 1
+	label.Text = finalText
+	label.TextWrapped = foldingEnabled
+	label.TextColor3 = settings.TextColor
+	label.TextSize = settings.TextSize
+	label.Font = fontToUse
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.TextYAlignment = Enum.TextYAlignment.Top
+	label.ZIndex = 1001
+
+	table.insert(generatedTexts, holder)
+end
+
+local generateBtn = Instance.new("TextButton", textPage)
+generateBtn.Size = UDim2.fromScale(0.9,0.12)
+generateBtn.Position = UDim2.fromScale(0.05,0.42)
+generateBtn.Text = "Generate"
+generateBtn.Font = Enum.Font.GothamBold
+generateBtn.TextScaled = true
+generateBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+generateBtn.TextColor3 = Color3.fromRGB(220,220,220)
+Instance.new("UICorner", generateBtn)
+
+generateBtn.MouseButton1Click:Connect(generateText)
+
+-- ================= CUSTOMIZE TAB =================
+
+-- Folding Toggle (moved here)
+
+local foldingBtn = Instance.new("TextButton", customPage)
+foldingBtn.Size = UDim2.fromScale(0.9,0.12)
+foldingBtn.Position = UDim2.fromScale(0.05,0.08)
+foldingBtn.Text = "Line Text: ON"
+foldingBtn.Font = Enum.Font.GothamBold
+foldingBtn.TextScaled = true
+foldingBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+foldingBtn.TextColor3 = Color3.fromRGB(220,220,220)
+Instance.new("UICorner", foldingBtn)
+
+foldingBtn.MouseButton1Click:Connect(function()
+	foldingEnabled = not foldingEnabled
+	foldingBtn.Text = foldingEnabled and "Folding Text: ON" or "Line Text: ON"
+end)
+
+-- Pixel Font Toggle
+
+local pixelBtn = Instance.new("TextButton", customPage)
+pixelBtn.Size = UDim2.fromScale(0.9,0.12)
+pixelBtn.Position = UDim2.fromScale(0.05,0.25)
 pixelBtn.Text = "Pixel Font: OFF"
 pixelBtn.Font = Enum.Font.GothamBold
 pixelBtn.TextScaled = true
-pixelBtn.BackgroundColor3 = Color3.fromRGB(70,70,90)
-pixelBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", pixelBtn).CornerRadius = UDim.new(0.3,0)
-
-local function applyPixelFont(state)
-	for _,obj in ipairs(game:GetDescendants()) do
-		if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-			if state then
-				if not defaultFonts[obj] then
-					defaultFonts[obj] = obj.Font
-				end
-				obj.Font = pixelFont
-			else
-				if defaultFonts[obj] then
-					obj.Font = defaultFonts[obj]
-				end
-			end
-		end
-	end
-end
-
-game.DescendantAdded:Connect(function(obj)
-	if pixelEnabled then
-		if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-			task.wait()
-			obj.Font = pixelFont
-		end
-	end
-end)
+pixelBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+pixelBtn.TextColor3 = Color3.fromRGB(220,220,220)
+Instance.new("UICorner", pixelBtn)
 
 pixelBtn.MouseButton1Click:Connect(function()
 	pixelEnabled = not pixelEnabled
-	
-	if pixelEnabled then
-		pixelBtn.Text = "Pixel Font: ON"
-		pixelBtn.BackgroundColor3 = Color3.fromRGB(0,200,120)
-		applyPixelFont(true)
-	else
-		pixelBtn.Text = "Pixel Font: OFF"
-		pixelBtn.BackgroundColor3 = Color3.fromRGB(70,70,90)
-		applyPixelFont(false)
-	end
+	pixelBtn.Text = pixelEnabled and "Pixel Font: ON" or "Pixel Font: OFF"
 end)
 
--- ================= GENERATE + DELETE =================
+-- ================= DROPDOWNS =================
 
-local buttonRow = Instance.new("Frame")
-buttonRow.Parent = main
-buttonRow.Size = UDim2.fromScale(1,0.1)
-buttonRow.BackgroundTransparency = 1
+local colors = {
+	{"White",Color3.fromRGB(255,255,255)},
+	{"Red",Color3.fromRGB(255,0,0)},
+	{"Green",Color3.fromRGB(0,255,0)},
+	{"Blue",Color3.fromRGB(0,0,255)},
+	{"Yellow",Color3.fromRGB(255,255,0)},
+	{"Purple",Color3.fromRGB(150,0,255)},
+	{"Orange",Color3.fromRGB(255,140,0)},
+	{"Pink",Color3.fromRGB(255,105,180)}
+}
 
-local rowLayout = Instance.new("UIListLayout", buttonRow)
-rowLayout.FillDirection = Enum.FillDirection.Horizontal
-rowLayout.Padding = UDim.new(0.04,0)
+local function createDropdown(button, settingKey)
 
-local function createButton(text,color)
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.fromScale(0.48,1)
-	btn.Text = text
-	btn.Font = Enum.Font.GothamBold
-	btn.TextScaled = true
-	btn.BackgroundColor3 = color
-	btn.TextColor3 = Color3.new(1,1,1)
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0.3,0)
-	return btn
+	if activeDropdown then
+		activeDropdown:Destroy()
+	end
+
+	local dropdown = Instance.new("Frame", gui)
+	dropdown.Size = UDim2.fromOffset(200,#colors*30)
+	dropdown.Position = UDim2.fromOffset(button.AbsolutePosition.X, button.AbsolutePosition.Y + button.AbsoluteSize.Y)
+	dropdown.BackgroundColor3 = Color3.fromRGB(25,25,25)
+	dropdown.ZIndex = 5000
+	Instance.new("UICorner", dropdown)
+
+	activeDropdown = dropdown
+
+	for i,data in ipairs(colors) do
+		local option = Instance.new("TextButton", dropdown)
+		option.Size = UDim2.new(1,0,0,30)
+		option.Position = UDim2.new(0,0,0,(i-1)*30)
+		option.Text = data[1]
+		option.Font = Enum.Font.GothamBold
+		option.TextSize = 14
+		option.BackgroundColor3 = Color3.fromRGB(40,40,40)
+		option.TextColor3 = Color3.fromRGB(220,220,220)
+		option.ZIndex = 5001
+
+		option.MouseButton1Click:Connect(function()
+			settings[settingKey] = data[2]
+			button.Text = button.Name .. ": " .. data[1]
+			dropdown:Destroy()
+			activeDropdown = nil
+		end)
+	end
 end
 
-local generateBtn = createButton("Generate", Color3.fromRGB(0,170,255))
-generateBtn.Parent = buttonRow
+-- Text Color Button
 
-local deleteBtn = createButton("Delete", Color3.fromRGB(200,50,50))
-deleteBtn.Parent = buttonRow
+local textColorBtn = Instance.new("TextButton", customPage)
+textColorBtn.Name = "Text Color"
+textColorBtn.Size = UDim2.fromScale(0.9,0.12)
+textColorBtn.Position = UDim2.fromScale(0.05,0.42)
+textColorBtn.Text = "Text Color"
+textColorBtn.Font = Enum.Font.GothamBold
+textColorBtn.TextScaled = true
+textColorBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+textColorBtn.TextColor3 = Color3.fromRGB(220,220,220)
+Instance.new("UICorner", textColorBtn)
 
-generateBtn.MouseButton1Click:Connect(function()
-	if textBox.Text == "" then return end
-	
-	if not multiTextEnabled then
-		for _,obj in pairs(generatedTexts) do
-			obj:Destroy()
-		end
-		generatedTexts = {}
-	end
-	
-	local label = Instance.new("TextLabel", gui)
-	label.Size = UDim2.new(0,400,0,currentSettings.BackgroundHeight)
-	label.Position = UDim2.new(0.5,-200,0.5,-60 + (#generatedTexts * 120))
-	label.TextWrapped = true
-	label.Text = textBox.Text
-	label.TextSize = currentSettings.TextSize
-	label.TextColor3 = currentSettings.TextColor
-	label.BackgroundColor3 = currentSettings.BackgroundColor
-	label.Active = true
-	label.Draggable = true
-	label.ZIndex = 100
-	
-	Instance.new("UICorner", label).CornerRadius = UDim.new(0,16)
-	table.insert(generatedTexts, label)
+textColorBtn.MouseButton1Click:Connect(function()
+	createDropdown(textColorBtn,"TextColor")
 end)
 
-deleteBtn.MouseButton1Click:Connect(function()
-	for _,obj in pairs(generatedTexts) do
-		obj:Destroy()
-	end
-	generatedTexts = {}
+-- Background Color Button
+
+local bgColorBtn = Instance.new("TextButton", customPage)
+bgColorBtn.Name = "Background Color"
+bgColorBtn.Size = UDim2.fromScale(0.9,0.12)
+bgColorBtn.Position = UDim2.fromScale(0.05,0.59)
+bgColorBtn.Text = "Background Color"
+bgColorBtn.Font = Enum.Font.GothamBold
+bgColorBtn.TextScaled = true
+bgColorBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+bgColorBtn.TextColor3 = Color3.fromRGB(220,220,220)
+Instance.new("UICorner", bgColorBtn)
+
+bgColorBtn.MouseButton1Click:Connect(function()
+	createDropdown(bgColorBtn,"BackgroundColor")
 end)
-
--- ================= SIZE PRESETS =================
-
-local sizeRow = Instance.new("Frame")
-sizeRow.Parent = main
-sizeRow.Size = UDim2.fromScale(1,0.1)
-sizeRow.BackgroundTransparency = 1
-
-local sizeLayout = Instance.new("UIListLayout", sizeRow)
-sizeLayout.FillDirection = Enum.FillDirection.Horizontal
-sizeLayout.Padding = UDim.new(0.04,0)
-
-local selectedSizeBtn
-
-local function createSizeButton(name,textSize,bgHeight)
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.fromScale(0.3,1)
-	btn.Text = name
-	btn.Font = Enum.Font.GothamBold
-	btn.TextScaled = true
-	btn.BackgroundColor3 = Color3.fromRGB(0,150,255)
-	btn.TextColor3 = Color3.new(1,1,1)
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0.4,0)
-
-	btn.MouseButton1Click:Connect(function()
-		currentSettings.TextSize = textSize
-		currentSettings.BackgroundHeight = bgHeight
-
-		if selectedSizeBtn then
-			selectedSizeBtn.BackgroundColor3 = Color3.fromRGB(0,150,255)
-		end
-
-		btn.BackgroundColor3 = Color3.fromRGB(0,255,0)
-		selectedSizeBtn = btn
-	end)
-
-	return btn
-end
-
-local small = createSizeButton("Small",18,100)
-small.Parent = sizeRow
-small.BackgroundColor3 = Color3.fromRGB(0,255,0)
-selectedSizeBtn = small
-
-createSizeButton("Medium",32,120).Parent = sizeRow
-createSizeButton("Large",48,160).Parent = sizeRow
