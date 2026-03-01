@@ -1,5 +1,3 @@
---// VxText Stable Clean Build + Premium Key System
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TextService = game:GetService("TextService")
