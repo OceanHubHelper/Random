@@ -1,3 +1,171 @@
+--// VxText Stable Clean Build + Key System
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TextService = game:GetService("TextService")
+local Stats = game:GetService("Stats")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local HttpService = game:GetService("HttpService")
+
+local player = Players.LocalPlayer
+
+--------------------------------------------------
+-- KEY SYSTEM
+--------------------------------------------------
+
+local DAY_KEY = "4827-a9sn"
+local LIFETIME_KEY = "9134-x2mk"
+
+local KEY_FOLDER = "VxTextKeys"
+local FILE_NAME = KEY_FOLDER.."/"..player.UserId..".json"
+
+local function SaveKey(data)
+	if not isfolder(KEY_FOLDER) then
+		makefolder(KEY_FOLDER)
+	end
+	writefile(FILE_NAME, HttpService:JSONEncode(data))
+end
+
+local function LoadKey()
+	if isfile(FILE_NAME) then
+		return HttpService:JSONDecode(readfile(FILE_NAME))
+	end
+	return nil
+end
+
+local keyData = LoadKey()
+
+local function IsLifetime()
+	return keyData and keyData.Type == "LIFETIME"
+end
+
+local function IsDayActive()
+	if not keyData or keyData.Type ~= "DAY" then return false end
+	return (os.time() - keyData.ActivatedAt) < 86400
+end
+
+local function IsDayExpired()
+	if not keyData or keyData.Type ~= "DAY" then return false end
+	return (os.time() - keyData.ActivatedAt) >= 86400
+end
+
+--------------------------------------------------
+-- GUI ROOT (LOCKED INITIALLY)
+--------------------------------------------------
+
+local gui = Instance.new("ScreenGui")
+gui.ResetOnSpawn = false
+gui.Enabled = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+--------------------------------------------------
+-- KEY UI
+--------------------------------------------------
+
+local keyGui = Instance.new("ScreenGui")
+keyGui.ResetOnSpawn = false
+keyGui.Parent = player.PlayerGui
+
+local keyFrame = Instance.new("Frame", keyGui)
+keyFrame.Size = UDim2.fromScale(0.4,0.3)
+keyFrame.Position = UDim2.fromScale(0.3,0.35)
+keyFrame.BackgroundColor3 = Color3.fromRGB(20,20,30)
+Instance.new("UICorner", keyFrame)
+
+local keyTitle = Instance.new("TextLabel", keyFrame)
+keyTitle.Size = UDim2.fromScale(1,0.25)
+keyTitle.BackgroundTransparency = 1
+keyTitle.Text = "VxText Key System"
+keyTitle.Font = Enum.Font.GothamBold
+keyTitle.TextScaled = true
+keyTitle.TextColor3 = Color3.new(1,1,1)
+
+local keyBox = Instance.new("TextBox", keyFrame)
+keyBox.Size = UDim2.fromScale(0.9,0.25)
+keyBox.Position = UDim2.fromScale(0.05,0.35)
+keyBox.PlaceholderText = "Enter your key..."
+keyBox.TextScaled = true
+keyBox.Font = Enum.Font.GothamBold
+keyBox.BackgroundColor3 = Color3.fromRGB(35,35,45)
+keyBox.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", keyBox)
+
+local keyBtn = Instance.new("TextButton", keyFrame)
+keyBtn.Size = UDim2.fromScale(0.9,0.2)
+keyBtn.Position = UDim2.fromScale(0.05,0.65)
+keyBtn.Text = "Activate"
+keyBtn.TextScaled = true
+keyBtn.Font = Enum.Font.GothamBold
+keyBtn.BackgroundColor3 = Color3.fromRGB(40,40,55)
+keyBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", keyBtn)
+
+local keyStatus = Instance.new("TextLabel", keyFrame)
+keyStatus.Size = UDim2.fromScale(1,0.15)
+keyStatus.Position = UDim2.fromScale(0,0.85)
+keyStatus.BackgroundTransparency = 1
+keyStatus.Font = Enum.Font.GothamBold
+keyStatus.TextScaled = true
+keyStatus.TextColor3 = Color3.fromRGB(255,60,60)
+
+local function Unlock()
+	keyGui:Destroy()
+	gui.Enabled = true
+end
+
+-- Auto Check
+if IsLifetime() then
+	Unlock()
+
+elseif IsDayActive() then
+	Unlock()
+
+elseif IsDayExpired() then
+	keyStatus.Text = "Your time has ran out. Sorry."
+	keyData = nil
+	SaveKey({})
+end
+
+-- Button Click
+keyBtn.MouseButton1Click:Connect(function()
+
+	if keyBox.Text == DAY_KEY then
+
+		if not keyData or keyData.Type ~= "DAY" then
+			keyData = {
+				Type = "DAY",
+				ActivatedAt = os.time()
+			}
+			SaveKey(keyData)
+		end
+
+		keyStatus.TextColor3 = Color3.fromRGB(0,255,0)
+		keyStatus.Text = "Day Key Activated!"
+		task.wait(1)
+		Unlock()
+
+	elseif keyBox.Text == LIFETIME_KEY then
+
+		keyData = {
+			Type = "LIFETIME"
+		}
+		SaveKey(keyData)
+
+		keyStatus.TextColor3 = Color3.fromRGB(0,255,0)
+		keyStatus.Text = "Lifetime Key Activated!"
+		task.wait(1)
+		Unlock()
+
+	else
+		keyStatus.TextColor3 = Color3.fromRGB(255,60,60)
+		keyStatus.Text = "Invalid Key!"
+	end
+end)
+
+--------------------------------------------------
+-- ORIGINAL SCRIPT CONTINUES BELOW
+--------------------------------------------------
 --// VxText Stable Clean Build
 
 local Players = game:GetService("Players")
