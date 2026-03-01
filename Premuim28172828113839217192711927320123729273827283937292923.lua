@@ -1,4 +1,4 @@
---// VxText Stable Clean Build + Key System
+--// VxText Stable Clean Build + Premium Key System
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -11,7 +11,16 @@ local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
 --------------------------------------------------
--- KEY SYSTEM
+-- MAIN GUI (LOCKED FIRST)
+--------------------------------------------------
+
+local gui = Instance.new("ScreenGui")
+gui.ResetOnSpawn = false
+gui.Enabled = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+--------------------------------------------------
+-- PREMIUM KEY SYSTEM
 --------------------------------------------------
 
 local DAY_KEY = "4827-a9sn"
@@ -45,20 +54,6 @@ local function IsDayActive()
 	return (os.time() - keyData.ActivatedAt) < 86400
 end
 
-local function IsDayExpired()
-	if not keyData or keyData.Type ~= "DAY" then return false end
-	return (os.time() - keyData.ActivatedAt) >= 86400
-end
-
---------------------------------------------------
--- GUI ROOT (LOCKED INITIALLY)
---------------------------------------------------
-
-local gui = Instance.new("ScreenGui")
-gui.ResetOnSpawn = false
-gui.Enabled = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
 --------------------------------------------------
 -- KEY UI
 --------------------------------------------------
@@ -67,120 +62,88 @@ local keyGui = Instance.new("ScreenGui")
 keyGui.ResetOnSpawn = false
 keyGui.Parent = player.PlayerGui
 
-local keyFrame = Instance.new("Frame", keyGui)
-keyFrame.Size = UDim2.fromScale(0.4,0.3)
-keyFrame.Position = UDim2.fromScale(0.3,0.35)
-keyFrame.BackgroundColor3 = Color3.fromRGB(20,20,30)
-Instance.new("UICorner", keyFrame)
+local frame = Instance.new("Frame", keyGui)
+frame.Size = UDim2.fromScale(0.4,0.3)
+frame.Position = UDim2.fromScale(0.3,0.35)
+frame.BackgroundColor3 = Color3.fromRGB(20,20,30)
+Instance.new("UICorner", frame)
 
-local keyTitle = Instance.new("TextLabel", keyFrame)
-keyTitle.Size = UDim2.fromScale(1,0.25)
-keyTitle.BackgroundTransparency = 1
-keyTitle.Text = "VxText Key System"
-keyTitle.Font = Enum.Font.GothamBold
-keyTitle.TextScaled = true
-keyTitle.TextColor3 = Color3.new(1,1,1)
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.fromScale(1,0.25)
+title.BackgroundTransparency = 1
+title.Text = "VxText Premium KeySystem"
+title.Font = Enum.Font.GothamBold
+title.TextScaled = true
+title.TextColor3 = Color3.new(1,1,1)
 
-local keyBox = Instance.new("TextBox", keyFrame)
-keyBox.Size = UDim2.fromScale(0.9,0.25)
-keyBox.Position = UDim2.fromScale(0.05,0.35)
-keyBox.PlaceholderText = "Enter your key..."
-keyBox.TextScaled = true
-keyBox.Font = Enum.Font.GothamBold
-keyBox.BackgroundColor3 = Color3.fromRGB(35,35,45)
-keyBox.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", keyBox)
+local box = Instance.new("TextBox", frame)
+box.Size = UDim2.fromScale(0.9,0.25)
+box.Position = UDim2.fromScale(0.05,0.35)
+box.PlaceholderText = "Enter your key..."
+box.TextScaled = true
+box.Font = Enum.Font.GothamBold
+box.BackgroundColor3 = Color3.fromRGB(35,35,45)
+box.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", box)
 
-local keyBtn = Instance.new("TextButton", keyFrame)
-keyBtn.Size = UDim2.fromScale(0.9,0.2)
-keyBtn.Position = UDim2.fromScale(0.05,0.65)
-keyBtn.Text = "Activate"
-keyBtn.TextScaled = true
-keyBtn.Font = Enum.Font.GothamBold
-keyBtn.BackgroundColor3 = Color3.fromRGB(40,40,55)
-keyBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", keyBtn)
+local button = Instance.new("TextButton", frame)
+button.Size = UDim2.fromScale(0.9,0.2)
+button.Position = UDim2.fromScale(0.05,0.65)
+button.Text = "Activate"
+button.TextScaled = true
+button.Font = Enum.Font.GothamBold
+button.BackgroundColor3 = Color3.fromRGB(40,40,55)
+button.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", button)
 
-local keyStatus = Instance.new("TextLabel", keyFrame)
-keyStatus.Size = UDim2.fromScale(1,0.15)
-keyStatus.Position = UDim2.fromScale(0,0.85)
-keyStatus.BackgroundTransparency = 1
-keyStatus.Font = Enum.Font.GothamBold
-keyStatus.TextScaled = true
-keyStatus.TextColor3 = Color3.fromRGB(255,60,60)
+local status = Instance.new("TextLabel", frame)
+status.Size = UDim2.fromScale(1,0.15)
+status.Position = UDim2.fromScale(0,0.85)
+status.BackgroundTransparency = 1
+status.Font = Enum.Font.GothamBold
+status.TextScaled = true
+status.TextColor3 = Color3.fromRGB(255,60,60)
 
 local function Unlock()
 	keyGui:Destroy()
 	gui.Enabled = true
 end
 
--- Auto Check
-if IsLifetime() then
+-- Auto Unlock if valid
+if IsLifetime() or IsDayActive() then
 	Unlock()
-
-elseif IsDayActive() then
-	Unlock()
-
-elseif IsDayExpired() then
-	keyStatus.Text = "Your time has ran out. Sorry."
-	keyData = nil
-	SaveKey({})
 end
 
--- Button Click
-keyBtn.MouseButton1Click:Connect(function()
+button.MouseButton1Click:Connect(function()
 
-	if keyBox.Text == DAY_KEY then
-
-		if not keyData or keyData.Type ~= "DAY" then
-			keyData = {
-				Type = "DAY",
-				ActivatedAt = os.time()
-			}
-			SaveKey(keyData)
-		end
-
-		keyStatus.TextColor3 = Color3.fromRGB(0,255,0)
-		keyStatus.Text = "Day Key Activated!"
-		task.wait(1)
-		Unlock()
-
-	elseif keyBox.Text == LIFETIME_KEY then
+	if box.Text == DAY_KEY then
 
 		keyData = {
-			Type = "LIFETIME"
+			Type = "DAY",
+			ActivatedAt = os.time()
 		}
 		SaveKey(keyData)
+		Unlock()
 
-		keyStatus.TextColor3 = Color3.fromRGB(0,255,0)
-		keyStatus.Text = "Lifetime Key Activated!"
-		task.wait(1)
+	elseif box.Text == LIFETIME_KEY then
+
+		keyData = { Type = "LIFETIME" }
+		SaveKey(keyData)
 		Unlock()
 
 	else
-		keyStatus.TextColor3 = Color3.fromRGB(255,60,60)
-		keyStatus.Text = "Invalid Key!"
+		status.Text = "Invalid Key!"
 	end
 end)
 
---------------------------------------------------
--- ORIGINAL SCRIPT CONTINUES BELOW
---------------------------------------------------
---// VxText Stable Clean Build
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TextService = game:GetService("TextService")
-local Stats = game:GetService("Stats")
-local TweenService = game:GetService("TweenService")
-local Lighting = game:GetService("Lighting")
-
-local player = Players.LocalPlayer
+-- HARD LOCK (script waits here)
+repeat task.wait() until not keyGui.Parent
 
 --------------------------------------------------
+-- VXTEXT ORIGINAL SCRIPT STARTS HERE
+--------------------------------------------------
+
 -- SETTINGS
---------------------------------------------------
-
 local Settings = {
 	TextSize = 28,
 	TextColor = Color3.fromRGB(255,255,255),
@@ -198,7 +161,6 @@ local activeDropdown = nil
 --------------------------------------------------
 
 local Colors = {
-
 -- Basic
 {"White",Color3.fromRGB(255,255,255)},
 {"Black",Color3.fromRGB(0,0,0)},
@@ -617,3 +579,4 @@ glassBtn.MouseButton1Click:Connect(function()
 	Lighting.GlobalShadows = not Settings.Glass
 	Lighting.FogEnd = Settings.Glass and 100000 or 1000
 end)
+}
